@@ -1,0 +1,9 @@
+html, body {
+    min-height: 100%;
+    margin: 0;
+    font-family: Roboto, Arial, sans-serif;
+}
+
+#app {
+    min-height: 100%;
+}
