@@ -221,7 +221,7 @@ public partial class MainForm : Form
                     "winFormHost",
                     new WinFormInterop(_windowService, HideLoadingOverlayFromBlazor));
 #if DEBUG
-                BeginInvoke((Action)OpenDevToolsWindow);
+                BeginInvoke(OpenDevToolsWindow);
 #endif
             }
             else
@@ -239,10 +239,7 @@ public partial class MainForm : Form
             if (!e.IsSuccess)
             {
                 _loadingLabel?.Text = $"Falha ao carregar a interface: {e.WebErrorStatus}";
-                if (_loadingProgressBar is not null)
-                {
-                    _loadingProgressBar.Visible = false;
-                }
+                _loadingProgressBar?.Visible = false;
             }
         };
     }
@@ -251,7 +248,7 @@ public partial class MainForm : Form
     {
         if (InvokeRequired)
         {
-            BeginInvoke((Action)HideLoadingOverlay);
+            BeginInvoke(HideLoadingOverlay);
             return;
         }
 

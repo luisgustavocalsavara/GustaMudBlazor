@@ -3,6 +3,8 @@ namespace GustaMudBlazor
     partial class MainForm
     {
         private System.ComponentModel.IContainer components = null;
+        public Microsoft.AspNetCore.Components.WebView.WindowsForms.BlazorWebView BlazorWebView;
+
 
         protected override void Dispose(bool disposing)
         {
@@ -48,6 +50,5 @@ namespace GustaMudBlazor
 
         #endregion
 
-        public Microsoft.AspNetCore.Components.WebView.WindowsForms.BlazorWebView BlazorWebView;
     }
 }

@@ -3,7 +3,7 @@ using GustaMudBlazor.Models.Entities;
 using System.Diagnostics;
 using System.Text.Json;
 
-namespace GustaMudBlazor.Services;
+namespace GustaMudBlazor.Services.WinForms;
 
 public class JsonSettingsService : ISettingsService
 {

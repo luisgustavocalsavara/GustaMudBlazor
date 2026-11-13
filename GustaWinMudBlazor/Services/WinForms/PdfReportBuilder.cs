@@ -2,7 +2,7 @@ using GustaMudBlazor.Models.Entities;
 using System.Globalization;
 using System.Text;
 
-namespace GustaMudBlazor.Services;
+namespace GustaMudBlazor.Services.WinForms;
 
 /// <summary>
 /// Gerador nativo de arquivos PDF (padrão ISO 32000-1 PDF 1.4 com fonte WinAnsi Encoding para acentuação em português)
