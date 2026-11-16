@@ -13,7 +13,9 @@
 @if (!AuthService.IsAuthenticated)
 {
     <MudLayout>
-        <MudAppBar Elevation="1">
+        <MudAppBar @key="_toolbarVersion" Elevation="1">
+            <MudText Typo="Typo.h6">@_toolbarVersion</MudText>
+
             <MudIcon Icon="@Icons.Material.Filled.SettingsInputComponent" Class="mr-2" />
             <MudText Typo="Typo.h6">Sistema de Receitas - Acesso Restrito</MudText>
             <MudSpacer />
@@ -33,7 +35,7 @@
 else
 {
     <MudLayout>
-        <MudAppBar Elevation="1">
+        <MudAppBar @key="_toolbarVersion" Elevation="1">
             <MudIconButton Icon="@Icons.Material.Filled.Menu"
                            Color="Color.Inherit"
                            Edge="Edge.Start"
@@ -67,6 +69,7 @@ else
 @code {
     private bool _isDrawerOpen = true;
     private bool _isDarkMode;
+    private bool _toolbarVersion;
 
     protected override void OnInitialized()
     {
@@ -74,7 +77,7 @@ else
 
         SettingsService.SettingsChanged += OnSettingsChanged;
         AuthService.AuthStateChanged += OnAuthStateChanged;
-
+        WindowService.FullScreenChanged += OnFullScreenChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -99,6 +102,15 @@ else
         _ = InvokeAsync(StateHasChanged);
     }
 
+    private void OnFullScreenChanged(bool isFullScreen)
+    {
+        _ = InvokeAsync(() =>
+        {
+            _toolbarVersion = !_toolbarVersion;
+            StateHasChanged();
+        });
+    }
+
     private void ToggleDrawer() => _isDrawerOpen = !_isDrawerOpen;
 
     private void Logout() => AuthService.Logout();
@@ -109,5 +121,6 @@ else
     {
         SettingsService.SettingsChanged -= OnSettingsChanged;
         AuthService.AuthStateChanged -= OnAuthStateChanged;
+        WindowService.FullScreenChanged -= OnFullScreenChanged;
     }
 }

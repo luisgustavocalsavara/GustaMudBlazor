@@ -6,14 +6,11 @@ namespace GustaMudBlazor;
 [ComVisible(true)]
 public class WinFormInterop(IWindowService windowService, Action hideLoadingOverlay)
 {
-    private readonly IWindowService _windowService = windowService;
-    private readonly Action _hideLoadingOverlay = hideLoadingOverlay;
+    public void ToggleFullScreenFromJs() => windowService.ToggleFullScreen();
 
-    public void ToggleFullScreenFromJs() => _windowService.ToggleFullScreen();
+    public void ExitFullScreenFromJs() => windowService.ExitFullScreen();
 
-    public void ExitFullScreenFromJs() => _windowService.ExitFullScreen();
+    public bool IsFullScreen() => windowService.IsFullScreen;
 
-    public bool IsFullScreen() => _windowService.IsFullScreen;
-
-    public void HideLoadingOverlayFromJs() => _hideLoadingOverlay();
+    public void HideLoadingOverlayFromJs() => hideLoadingOverlay();
 }

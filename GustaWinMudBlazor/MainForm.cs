@@ -64,7 +64,6 @@ public partial class MainForm : Form
         BlazorWebView.Services = serviceProvider;
 
         InitializeBlazorWebView();
-        RegisterHotKey();
     }
 
     private static string LoadDefaultIconDataUrl()
@@ -177,30 +176,6 @@ public partial class MainForm : Form
             this,
             sp.GetRequiredService<IPlcExportDataService>()));
         services.AddScoped<IWeatherService, WeatherService>();
-    }
-
-    private void RegisterHotKey()
-    {
-        KeyPreview = true;
-        KeyDown += (sender, e) =>
-        {
-            if (e.KeyCode == Keys.F11)
-            {
-                _windowService.ToggleFullScreen();
-                e.Handled = true;
-            }
-            else if (e.KeyCode == Keys.Escape && IsFullScreen)
-            {
-                _windowService.ExitFullScreen();
-                e.Handled = true;
-            }
-            else if (e.KeyCode == Keys.F12 && _isWebViewInitialized)
-            {
-                BlazorWebView.WebView.CoreWebView2.OpenDevToolsWindow();
-                e.Handled = true;
-                e.SuppressKeyPress = true;
-            }
-        };
     }
 
     private void InitializeBlazorWebView()
