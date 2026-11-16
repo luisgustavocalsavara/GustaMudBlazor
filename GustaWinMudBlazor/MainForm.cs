@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using GustaMudBlazor.Adapters.WinForms;
 using GustaMudBlazor.Models.Entities;
 using GustaMudBlazor.Models.Interfaces;
 using Microsoft.AspNetCore.Components.WebView.WindowsForms;
@@ -7,8 +8,10 @@ using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;
 using GustaMudBlazor.Services;
 using GustaMudBlazor.Services.Data;
+using GustaMudBlazor.Services.Reports;
 using GustaMudBlazor.Services.WinForms;
 using GustaMudBlazor.Views;
+using GustaMudBlazor.App.Interfaces;
 
 namespace GustaMudBlazor;
 
@@ -158,9 +161,8 @@ public partial class MainForm : Form
         services.AddScoped<IBlockService, BlockService>();
         services.AddScoped<IRecipeService, RecipeService>();
         services.AddScoped<IPlcExportDataService, PlcExportDataService>();
-        services.AddScoped<IPlcExportService>(sp => new WinFormsPlcExportService(
-            this,
-            sp.GetRequiredService<IPlcExportDataService>()));
+        services.AddPlcReportGenerators();
+        services.AddScoped<IFileExportService, WinFormsFileExportService>();
         services.AddScoped<IWeatherService, WeatherService>();
     }
 

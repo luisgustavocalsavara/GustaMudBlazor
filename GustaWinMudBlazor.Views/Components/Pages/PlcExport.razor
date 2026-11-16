@@ -1,14 +1,15 @@
 @page "/exportar-plc"
 @inject IRecipeService RecipeService
-@inject IPlcExportService PlcExportService
-@inject IAuthService AuthService
+@inject IPlcExportDataService PlcExportDataService
+@inject IEnumerable<IPlcReportGenerator> ReportGenerators
+@inject IFileExportService FileExportService
 
 <PageTitle>Itens da Receita & Exportar PLC</PageTitle>
 
 <div class="d-flex justify-space-between align-center mb-3">
     <div>
         <MudText Typo="Typo.h5">Tabela de Itens da Receita (Com Instância) & Exportação para PLC</MudText>
-        <MudText Typo="Typo.caption">Selecione uma receita para visualizar todos os itens instanciados dos 4 Mixers e gerar o arquivo .CSV ou .PDF pronto para o CLP.</MudText>
+        <MudText Typo="Typo.caption">Selecione uma receita para visualizar os itens instanciados e gerar um relatório para o CLP.</MudText>
     </div>
     @if (!string.IsNullOrEmpty(_statusMessage))
     {
@@ -67,29 +68,23 @@
                           Immediate="true" />
         </MudItem>
 
-        <!-- BOTÕES DE EXPORTAÇÃO .CSV E .PDF PARA O PLC -->
-        <MudItem xs="12" md="3" Class="d-flex gap-2 justify-end">
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Success"
-                       StartIcon="@Icons.Material.Filled.TableView"
-                       Disabled="@(_filteredRows.Count == 0)"
-                       OnClick="ExportCsvAsync">
-                Gerar .CSV (PLC)
-            </MudButton>
-
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Error"
-                       StartIcon="@Icons.Material.Filled.PictureAsPdf"
-                       Disabled="@(_filteredRows.Count == 0)"
-                       OnClick="ExportPdfAsync">
-                Gerar .PDF (PLC)
-            </MudButton>
+        <MudItem xs="12" md="3" Class="d-flex gap-2 justify-end flex-wrap">
+            @foreach (var generator in ReportGenerators)
+            {
+                <MudButton @key="generator.Id"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Disabled="@(_isLoading || _filteredRows.Count == 0)"
+                           OnClick="() => Export(generator)">
+                    Gerar @generator.DisplayName
+                </MudButton>
+            }
         </MudItem>
     </MudGrid>
 </MudPaper>
 
 <MudPaper Elevation="2" Class="pa-4">
-    @if (_selectedRecipe is null)
+    @if (_recipeExportData is null)
     {
         <MudAlert Severity="Severity.Info">Selecione uma receita acima para carregar a tabela de itens instanciados.</MudAlert>
     }
@@ -98,10 +93,10 @@
         <div class="d-flex justify-space-between align-center mb-3">
             <div>
                 <MudText Typo="Typo.h6">
-                    Itens Prontos para o PLC — @_selectedRecipe.Name (SKU: @_selectedRecipe.Sku)
+                    Itens Prontos para o PLC — @_recipeExportData.RecipeName (SKU: @_recipeExportData.RecipeSku)
                 </MudText>
                 <MudText Typo="Typo.caption">
-                    Total de Tags listadas: <b>@_filteredRows.Count</b> | Data de criação da receita: @_selectedRecipe.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                    Total de Tags listadas: <b>@_filteredRows.Count</b> | Data de criação da receita: @_recipeExportData.RecipeCreatedAt.ToString("dd/MM/yyyy HH:mm")
                 </MudText>
             </div>
         </div>
@@ -165,7 +160,7 @@
     private List<PlcExportRow> _allRows = [];
     private List<Recipe> _recipes = [];
     private int? _selectedRecipeId;
-    private Recipe? _selectedRecipe;
+    private PlcRecipeExportData? _recipeExportData;
     private List<PlcExportRow> _filteredRows = [];
 
     private MixerType? _selectedMixerFilter;
@@ -230,14 +225,14 @@
     {
         if (recipeId is null or <= 0)
         {
-            _selectedRecipe = null;
+            _recipeExportData = null;
             _allRows = [];
             _filteredRows = [];
             return;
         }
 
-        _selectedRecipe = await RecipeService.GetRecipeWithMixersAsync(recipeId.Value);
-        _allRows = await PlcExportService.GetPlcItemsForRecipeAsync(recipeId.Value);
+        _recipeExportData = await PlcExportDataService.GetRecipeExportDataAsync(recipeId.Value);
+        _allRows = _recipeExportData?.Rows.ToList() ?? [];
         ApplyFilter();
     }
 
@@ -266,31 +261,25 @@
         _filteredRows = query.ToList();
     }
 
-    private async Task ExportCsvAsync()
+    private async Task Export(IPlcReportGenerator generator)
     {
-        if (_selectedRecipe is null || _filteredRows.Count == 0)
+        if (_recipeExportData is null || _filteredRows.Count == 0)
         {
             _hasError = true;
-            _statusMessage = "Selecione uma receita que possua itens antes de exportar o CSV.";
+            _statusMessage = "Selecione uma receita que possua itens antes de exportar o relatório.";
             return;
         }
 
-        var (success, message, _) = await PlcExportService.ExportToCsvAsync(_selectedRecipe, _filteredRows);
-        _hasError = !success;
-        _statusMessage = message;
-    }
-
-    private async Task ExportPdfAsync()
-    {
-        if (_selectedRecipe is null || _filteredRows.Count == 0)
-        {
-            _hasError = true;
-            _statusMessage = "Selecione uma receita que possua itens antes de exportar o PDF.";
-            return;
-        }
-
-        var (success, message, _) = await PlcExportService.ExportToPdfAsync(_selectedRecipe, _filteredRows);
-        _hasError = !success;
-        _statusMessage = message;
+        var report = _recipeExportData with { Rows = _filteredRows.ToArray() };
+        var fileName = $"PLC_{_recipeExportData.RecipeSku}_{DateTime.Now:yyyyMMdd_HHmm}";
+        var result = await FileExportService.SaveAsync(
+            $"Exportar {generator.DisplayName}",
+            generator.DialogFilter,
+            generator.FileExtension,
+            fileName,
+            generator.Generate(report),
+            generator.OpenAfterExport);
+        _hasError = !result.Success;
+        _statusMessage = result.Message;
     }
 }

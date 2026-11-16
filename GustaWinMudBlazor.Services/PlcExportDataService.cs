@@ -1,3 +1,5 @@
+using GustaMudBlazor.App.Interfaces;
+using GustaMudBlazor.App.Models;
 using GustaMudBlazor.Models.Entities;
 using GustaMudBlazor.Models.Interfaces;
 
@@ -5,10 +7,10 @@ namespace GustaMudBlazor.Services;
 
 public class PlcExportDataService(IRecipeService recipeService) : IPlcExportDataService
 {
-    public async Task<List<PlcExportRow>> GetPlcItemsForRecipeAsync(int recipeId)
+    public async Task<PlcRecipeExportData?> GetRecipeExportDataAsync(int recipeId)
     {
         var recipe = await recipeService.GetRecipeWithMixersAsync(recipeId);
-        if (recipe is null) return [];
+        if (recipe is null) return null;
 
         var rows = new List<PlcExportRow>();
 
@@ -41,6 +43,10 @@ public class PlcExportDataService(IRecipeService recipeService) : IPlcExportData
             }
         }
 
-        return rows;
+        return new PlcRecipeExportData(
+            recipe.Name,
+            recipe.Sku,
+            recipe.CreatedAt,
+            rows);
     }
 }

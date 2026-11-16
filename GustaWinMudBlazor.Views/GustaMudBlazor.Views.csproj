@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GustaWinMudBlazor.Models\GustaMudBlazor.Models.csproj" />
+    <ProjectReference Include="..\GustaWinMudBlazor.Application\GustaMudBlazor.App.csproj" />
   </ItemGroup>
 
 </Project>
