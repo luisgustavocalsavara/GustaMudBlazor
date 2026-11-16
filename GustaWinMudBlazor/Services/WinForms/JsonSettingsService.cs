@@ -66,11 +66,10 @@ public class JsonSettingsService : ISettingsService
         SettingsChanged?.Invoke();
     }
 
-    public void UpdateFullScreen(bool isFullScreen)
+    public void UpdateWindowState(AppWindowState windowState)
     {
-        if (Current.IsFullScreen == isFullScreen) return;
-        Current.IsFullScreen = isFullScreen;
+        if (Current.WindowState == windowState) return;
+        Current.WindowState = windowState;
         Save();
-        SettingsChanged?.Invoke();
     }
 }

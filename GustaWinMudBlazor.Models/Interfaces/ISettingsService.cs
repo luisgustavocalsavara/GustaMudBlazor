@@ -9,5 +9,5 @@ public interface ISettingsService
     void Load();
     void Save();
     void UpdateDarkMode(bool isDarkMode);
-    void UpdateFullScreen(bool isFullScreen);
+    void UpdateWindowState(AppWindowState windowState);
 }

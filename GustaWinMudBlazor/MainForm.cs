@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using GustaMudBlazor.Models.Entities;
 using GustaMudBlazor.Models.Interfaces;
 using Microsoft.AspNetCore.Components.WebView.WindowsForms;
 using Microsoft.EntityFrameworkCore;
@@ -13,55 +14,41 @@ namespace GustaMudBlazor;
 
 public partial class MainForm : Form
 {
-    private FormBorderStyle _previousBorderStyle;
-    private Rectangle _previousBounds;
-    private bool _wasMaximized;
     private readonly JsonSettingsService _settingsService;
-    private readonly WinFormsWindowService _windowService;
-    private bool _isWebViewInitialized;
+    private ServiceProvider? _serviceProvider;
 
     private Panel? _loadingPanel;
     private Label? _loadingLabel;
     private ProgressBar? _loadingProgressBar;
 
-    public bool IsFullScreen => FormBorderStyle == FormBorderStyle.None;
-
     public MainForm()
     {
         InitializeComponent();
 
-        // Guarda a posição centralizada padrão caso o app já inicie em FullScreen
-        var workingArea = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 1920, 1080);
-        _previousBounds = new Rectangle(
-            workingArea.Left + (workingArea.Width - Width) / 2,
-            workingArea.Top + (workingArea.Height - Height) / 2,
-            Width,
-            Height);
-        _previousBorderStyle = FormBorderStyle;
-        _wasMaximized = WindowState == FormWindowState.Maximized;
-
-        // 1. Lê o appsettings.user.json antes de tudo
+        // Lê as configurações do usuário antes de inicializar a interface
         _settingsService = new JsonSettingsService();
-        _windowService = new WinFormsWindowService(this, _settingsService);
-
-        // 2. Restaura o modo tela cheia se estava salvo
-        if (_settingsService.Current.IsFullScreen)
+        WindowState = _settingsService.Current.WindowState switch
         {
-            ToggleFullScreenState();
-        }
+            AppWindowState.Minimized => FormWindowState.Minimized,
+            AppWindowState.Maximized => FormWindowState.Maximized,
+            _ => FormWindowState.Normal
+        };
+        Resize += OnWindowResize;
 
-        // 3. Mostra o painel de loading por cima (BringToFront) com a cor exata do tema (Dark ou Light)
+        // Mostra o painel de loading por cima (BringToFront) com a cor exata do tema (Dark ou Light)
         InitializeLoadingOverlay(_settingsService.Current.IsDarkMode);
 
         var services = new ServiceCollection();
         ConfigureServices(services);
-        var serviceProvider = services.BuildServiceProvider();
+        _serviceProvider = services.BuildServiceProvider();
+        BlazorWebView.Disposed += OnBlazorWebViewDisposed;
 
         // 4. Carrega o favicon.ico padrão como ícone de exemplo para os blocos iniciais e inicializa o banco SQLite
         var defaultIconDataUrl = LoadDefaultIconDataUrl();
-        AppDbContext.InitializeDatabase(serviceProvider, defaultIconDataUrl);
 
-        BlazorWebView.Services = serviceProvider;
+        AppDbContext.InitializeDatabase(_serviceProvider, defaultIconDataUrl);
+
+        BlazorWebView.Services = _serviceProvider;
 
         InitializeBlazorWebView();
     }
@@ -167,7 +154,6 @@ public partial class MainForm : Form
 
         // Registro de Services (Arquitetura Component-Service-Model Direta, sem camada ViewModel)
         services.AddSingleton<ISettingsService>(_settingsService);
-        services.AddSingleton<IWindowService>(_windowService);
         services.AddSingleton<IAuthService, AuthService>();
         services.AddScoped<IBlockService, BlockService>();
         services.AddScoped<IRecipeService, RecipeService>();
@@ -189,12 +175,11 @@ public partial class MainForm : Form
             {
 
                 BlazorWebView.WebView.CoreWebView2.Settings.AreDevToolsEnabled = true;
-                _isWebViewInitialized = true;
 
                 _loadingLabel?.Text = "Carregando interface Blazor...";
                 BlazorWebView.WebView.CoreWebView2.AddHostObjectToScript(
                     "winFormHost",
-                    new WinFormInterop(_windowService, HideLoadingOverlayFromBlazor));
+                    new WinFormInterop(HideLoadingOverlayFromBlazor));
 #if DEBUG
                 BeginInvoke(OpenDevToolsWindow);
 #endif
@@ -246,29 +231,21 @@ public partial class MainForm : Form
         }
     }
 
-    public void ToggleFullScreenState()
+    private void OnWindowResize(object? sender, EventArgs e)
     {
-        if (FormBorderStyle != FormBorderStyle.None)
+        var state = WindowState switch
         {
-            _previousBorderStyle = FormBorderStyle;
-            if (WindowState == FormWindowState.Normal)
-            {
-                _previousBounds = Bounds;
-            }
-            _wasMaximized = WindowState == FormWindowState.Maximized;
+            FormWindowState.Minimized => AppWindowState.Minimized,
+            FormWindowState.Maximized => AppWindowState.Maximized,
+            _ => AppWindowState.Normal
+        };
+        _settingsService.UpdateWindowState(state);
+    }
 
-            FormBorderStyle = FormBorderStyle.None;
-            WindowState = FormWindowState.Maximized;
-        }
-        else
-        {
-            FormBorderStyle = _previousBorderStyle;
-            WindowState = _wasMaximized ? FormWindowState.Maximized : FormWindowState.Normal;
-            if (WindowState == FormWindowState.Normal)
-            {
-                Bounds = _previousBounds;
-            }
-        }
+    private void OnBlazorWebViewDisposed(object? sender, EventArgs e)
+    {
+        _serviceProvider?.Dispose();
+        _serviceProvider = null;
     }
 
     private void MainForm_Load(object sender, EventArgs e)

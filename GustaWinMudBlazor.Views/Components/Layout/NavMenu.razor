@@ -1,6 +1,5 @@
 @implements IDisposable
 @inject IAuthService AuthService
-@inject IWindowService WindowService
 
 <MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
@@ -57,11 +56,6 @@
         Trocar Usuário
     </MudNavLink>
 
-    <MudNavLink Icon="@Icons.Material.Filled.ExitToApp"
-                IconColor="Color.Error"
-                OnClick="WindowService.CloseWindow">
-        Sair do Sistema
-    </MudNavLink>
 </MudNavMenu>
 
 @code {
