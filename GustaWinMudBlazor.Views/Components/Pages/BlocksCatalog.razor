@@ -1,6 +1,7 @@
 @page "/cadastro-blocos"
 @inject IBlockService BlockService
 @inject IAuthService AuthService
+@inject IDialogService DialogService
 
 <PageTitle>Cadastro de Blocos</PageTitle>
 
@@ -380,7 +381,18 @@
 
     private async Task DeleteBlockAsync(Block block)
     {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", $"Deseja realmente excluir o bloco '{block.Code} - {block.Name}'?");
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirmar exclusão", parameters);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+
         await BlockService.DeleteBlockAsync(block.Id);
+        if (_editingBlockId == block.Id)
+        {
+            StartNewBlock();
+        }
+
         await LoadBlocksAsync();
         _hasError = false;
         _statusMessage = "Bloco excluído.";

@@ -60,21 +60,23 @@ public class BlockService(IDbContextFactory<AppDbContext> dbFactory) : IBlockSer
         else
         {
             var existing = await db.Blocks.Include(b => b.RecipeBlocks).FirstOrDefaultAsync(b => b.Id == block.Id);
-            if (existing is not null)
+            if (existing is null)
             {
-                if (existing.MixerType != block.MixerType && existing.RecipeBlocks.Count > 0)
-                {
-                    throw new InvalidOperationException(
-                        $"Este bloco já está sendo usado no {existing.MixerType.GetDisplayName()} de uma receita e não pode mudar para outro Mixer.");
-                }
-
-                existing.MixerType = block.MixerType;
-                existing.Code = block.Code;
-                existing.Name = block.Name;
-                existing.Description = block.Description;
-                existing.IconDataUrl = block.IconDataUrl;
-                existing.IconFileName = block.IconFileName;
+                throw new InvalidOperationException("O bloco não existe mais e não pode ser atualizado.");
             }
+
+            if (existing.MixerType != block.MixerType && existing.RecipeBlocks.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    $"Este bloco já está sendo usado no {existing.MixerType.GetDisplayName()} de uma receita e não pode mudar para outro Mixer.");
+            }
+
+            existing.MixerType = block.MixerType;
+            existing.Code = block.Code;
+            existing.Name = block.Name;
+            existing.Description = block.Description;
+            existing.IconDataUrl = block.IconDataUrl;
+            existing.IconFileName = block.IconFileName;
         }
 
         await db.SaveChangesAsync();
@@ -135,14 +137,16 @@ public class BlockService(IDbContextFactory<AppDbContext> dbFactory) : IBlockSer
         else
         {
             var existing = await db.RecipeItems.FindAsync(item.Id);
-            if (existing is not null)
+            if (existing is null)
             {
-                existing.BlockId = item.BlockId;
-                existing.Tag = item.Tag;
-                existing.Description = item.Description;
-                existing.DataType = item.DataType;
-                await db.SaveChangesAsync();
+                throw new InvalidOperationException("O item não existe mais e não pode ser atualizado.");
             }
+
+            existing.BlockId = item.BlockId;
+            existing.Tag = item.Tag;
+            existing.Description = item.Description;
+            existing.DataType = item.DataType;
+            await db.SaveChangesAsync();
         }
 
         return item;

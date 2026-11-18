@@ -1,6 +1,7 @@
 @page "/cadastro-receitas"
 @inject IRecipeService RecipeService
 @inject IAuthService AuthService
+@inject IDialogService DialogService
 
 <PageTitle>Cadastro de Receitas</PageTitle>
 
@@ -219,17 +220,36 @@
             Sku = _recipeSku.Trim()
         };
 
-        await RecipeService.SaveRecipeAsync(recipe);
-        StartNewRecipe();
-        _hasError = false;
-        _statusMessage = "Receita salva com os 4 Mixers (100, 200, 300, 400)!";
+        try
+        {
+            await RecipeService.SaveRecipeAsync(recipe);
+            StartNewRecipe();
+            _hasError = false;
+            _statusMessage = "Receita salva com os 4 Mixers (100, 200, 300, 400)!";
 
-        await LoadRecipesAsync();
+            await LoadRecipesAsync();
+        }
+        catch (Exception ex)
+        {
+            _hasError = true;
+            _statusMessage = ex.Message;
+        }
     }
 
     private async Task DeleteRecipeAsync(Recipe recipe)
     {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", $"Deseja realmente excluir a receita '{recipe.Name}'?");
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirmar exclusão", parameters);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+
         await RecipeService.DeleteRecipeAsync(recipe.Id);
+        if (_editingRecipeId == recipe.Id)
+        {
+            StartNewRecipe();
+        }
+
         await LoadRecipesAsync();
         _hasError = false;
         _statusMessage = "Receita excluída.";

@@ -1,6 +1,7 @@
 @page "/blocos"
 @inject IBlockService BlockService
 @inject IAuthService AuthService
+@inject IDialogService DialogService
 
 <PageTitle>Blocos por Mixer & Itens</PageTitle>
 
@@ -436,7 +437,7 @@
         var detailed = await BlockService.GetBlockWithItemsAsync(block.Id);
         _selectedBlock = detailed;
         _allSelectedBlockItems = detailed?.Items ?? [];
-        _isEditingItem = false;
+        CancelItemEdit();
         ApplyItemFilter();
     }
 
@@ -504,7 +505,16 @@
         _statusMessage = null;
     }
 
-    private void CancelBlockEdit() => _isEditingBlock = false;
+    private void CancelBlockEdit()
+    {
+        _isEditingBlock = false;
+        _editingBlockId = 0;
+        _blockCode = string.Empty;
+        _blockName = string.Empty;
+        _blockDescription = string.Empty;
+        _blockIconDataUrl = string.Empty;
+        _blockIconFileName = string.Empty;
+    }
 
     private async Task OnIconFileSelected(IBrowserFile? file)
     {
@@ -552,7 +562,7 @@
             };
 
             var saved = await BlockService.SaveBlockAsync(block);
-            _isEditingBlock = false;
+            CancelBlockEdit();
             _hasError = false;
             _statusMessage = $"Bloco salvo com sucesso no {saved.MixerType.GetDisplayName()}!";
 
@@ -569,9 +579,21 @@
 
     private async Task DeleteBlockAsync(Block block)
     {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", $"Deseja realmente excluir o bloco '{block.Code} - {block.Name}'?");
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirmar exclusão", parameters);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+
         await BlockService.DeleteBlockAsync(block.Id);
+        if (_editingBlockId == block.Id)
+        {
+            CancelBlockEdit();
+        }
+
         if (_selectedBlock?.Id == block.Id)
         {
+            CancelItemEdit();
             _selectedBlock = null;
             _allSelectedBlockItems = [];
             _filteredItems = [];
@@ -602,7 +624,14 @@
         _statusMessage = null;
     }
 
-    private void CancelItemEdit() => _isEditingItem = false;
+    private void CancelItemEdit()
+    {
+        _isEditingItem = false;
+        _editingItemId = 0;
+        _itemTag = string.Empty;
+        _itemDescription = string.Empty;
+        _itemDataType = ItemDataType.INT;
+    }
 
     private async Task SaveItemAsync()
     {
@@ -624,20 +653,40 @@
             DataType = _itemDataType
         };
 
-        await BlockService.SaveBlockItemAsync(item);
-        _isEditingItem = false;
-        _hasError = false;
-        _statusMessage = "Item estrutural salvo no bloco! Os valores são definidos em cada Receita.";
+        try
+        {
+            await BlockService.SaveBlockItemAsync(item);
+            CancelItemEdit();
+            _hasError = false;
+            _statusMessage = "Item estrutural salvo no bloco! Os valores são definidos em cada Receita.";
 
-        await SelectBlockAsync(_selectedBlock);
-        _allBlocks = await BlockService.GetAllBlocksAsync();
-        ApplyBlockFilter();
+            await SelectBlockAsync(_selectedBlock);
+            _allBlocks = await BlockService.GetAllBlocksAsync();
+            ApplyBlockFilter();
+        }
+        catch (Exception ex)
+        {
+            _hasError = true;
+            _statusMessage = ex.Message;
+        }
     }
 
     private async Task DeleteItemAsync(RecipeItem item)
     {
         if (_selectedBlock is null) return;
+
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", $"Deseja realmente excluir o item '{item.Tag}'?");
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirmar exclusão", parameters);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+
         await BlockService.DeleteBlockItemAsync(item.Id);
+        if (_editingItemId == item.Id)
+        {
+            CancelItemEdit();
+        }
+
         await SelectBlockAsync(_selectedBlock);
         _allBlocks = await BlockService.GetAllBlocksAsync();
         ApplyBlockFilter();

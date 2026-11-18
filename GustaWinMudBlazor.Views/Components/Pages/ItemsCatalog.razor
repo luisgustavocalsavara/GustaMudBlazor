@@ -1,6 +1,7 @@
 @page "/cadastro-itens"
 @inject IBlockService BlockService
 @inject IAuthService AuthService
+@inject IDialogService DialogService
 
 <PageTitle>Cadastro de Itens (Tags)</PageTitle>
 
@@ -341,23 +342,38 @@
             DataType = _itemDataType
         };
 
-        await BlockService.SaveBlockItemAsync(item);
-        _hasError = false;
-        _statusMessage = _editingItemId == 0
-            ? "Novo item cadastrado com sucesso!"
-            : "Item atualizado com sucesso!";
+        try
+        {
+            await BlockService.SaveBlockItemAsync(item);
+            _hasError = false;
+            _statusMessage = _editingItemId == 0
+                ? "Novo item cadastrado com sucesso!"
+                : "Item atualizado com sucesso!";
 
-        _editingItemId = 0;
-        _itemTag = string.Empty;
-        _itemDescription = string.Empty;
-        _itemDataType = ItemDataType.INT;
-
-        await LoadDataAsync();
+            StartNewItem();
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            _hasError = true;
+            _statusMessage = ex.Message;
+        }
     }
 
     private async Task DeleteItemAsync(RecipeItem item)
     {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", $"Deseja realmente excluir o item '{item.Tag}'?");
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirmar exclusão", parameters);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+
         await BlockService.DeleteBlockItemAsync(item.Id);
+        if (_editingItemId == item.Id)
+        {
+            StartNewItem();
+        }
+
         _hasError = false;
         _statusMessage = $"Item '{item.Tag}' excluído.";
         await LoadDataAsync();

@@ -1,5 +1,6 @@
 @page "/usuarios"
 @inject IAuthService AuthService
+@inject IDialogService DialogService
 
 <PageTitle>Usuários e Permissões</PageTitle>
 
@@ -73,7 +74,7 @@ else
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                                Color="Color.Error"
                                                Size="Size.Small"
-                                               OnClick="@(() => DeleteUserAsync(context.Id))" />
+                                               OnClick="@(() => DeleteUserAsync(context.Id, context.Username))" />
                             }
                         </MudTd>
                     </RowTemplate>
@@ -139,8 +140,14 @@ else
         }
     }
 
-    private async Task DeleteUserAsync(int userId)
+    private async Task DeleteUserAsync(int userId, string username)
     {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", $"Deseja realmente excluir o usuário '{username}'?");
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirmar exclusão", parameters);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+
         await AuthService.DeleteUserAsync(userId);
         _users = await AuthService.GetAllUsersAsync();
     }

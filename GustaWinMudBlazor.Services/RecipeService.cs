@@ -113,11 +113,13 @@ public class RecipeService(IDbContextFactory<AppDbContext> dbFactory) : IRecipeS
         else
         {
             var existing = await db.Recipes.FindAsync(recipe.Id);
-            if (existing is not null)
+            if (existing is null)
             {
-                existing.Name = recipe.Name;
-                existing.Sku = recipe.Sku;
+                throw new InvalidOperationException("A receita não existe mais e não pode ser atualizada.");
             }
+
+            existing.Name = recipe.Name;
+            existing.Sku = recipe.Sku;
         }
 
         await db.SaveChangesAsync();

@@ -2,6 +2,7 @@
 @inject IRecipeService RecipeService
 @inject IBlockService BlockService
 @inject IAuthService AuthService
+@inject IDialogService DialogService
 
 <PageTitle>Receitas, Mixers & Blocos</PageTitle>
 
@@ -581,7 +582,13 @@
         _statusMessage = null;
     }
 
-    private void CancelRecipeEdit() => _isEditingRecipe = false;
+    private void CancelRecipeEdit()
+    {
+        _isEditingRecipe = false;
+        _editingRecipeId = 0;
+        _recipeName = string.Empty;
+        _recipeSku = string.Empty;
+    }
 
     private async Task SaveRecipeAsync()
     {
@@ -599,19 +606,38 @@
             Sku = _recipeSku.Trim()
         };
 
-        var saved = await RecipeService.SaveRecipeAsync(recipe);
-        _isEditingRecipe = false;
-        _hasError = false;
-        _statusMessage = "Receita salva com os 4 Mixers (100, 200, 300, 400)!";
+        try
+        {
+            var saved = await RecipeService.SaveRecipeAsync(recipe);
+            CancelRecipeEdit();
+            _hasError = false;
+            _statusMessage = "Receita salva com os 4 Mixers (100, 200, 300, 400)!";
 
-        _allRecipes = await RecipeService.GetAllRecipesAsync();
-        ApplyRecipeFilter();
-        await SelectRecipeAsync(saved);
+            _allRecipes = await RecipeService.GetAllRecipesAsync();
+            ApplyRecipeFilter();
+            await SelectRecipeAsync(saved);
+        }
+        catch (Exception ex)
+        {
+            _hasError = true;
+            _statusMessage = ex.Message;
+        }
     }
 
     private async Task DeleteRecipeAsync(Recipe recipe)
     {
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", $"Deseja realmente excluir a receita '{recipe.Name}'?");
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirmar exclusão", parameters);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled) return;
+
         await RecipeService.DeleteRecipeAsync(recipe.Id);
+        if (_editingRecipeId == recipe.Id)
+        {
+            CancelRecipeEdit();
+        }
+
         if (_selectedRecipe?.Id == recipe.Id)
         {
             _selectedRecipe = null;
