@@ -62,6 +62,7 @@
 
             <MudTable T="Recipe"
                       Items="_filteredRecipes"
+                      Breakpoint="Breakpoint.Sm"
                       Hover="true"
                       Dense="true"
                       Loading="_isLoading"
@@ -214,7 +215,7 @@
                         <MudExpansionPanels MultiExpansion="true">
                             @foreach (var rb in _filteredRecipeBlocks)
                             {
-                                <MudExpansionPanel Expanded="true">
+                                <MudExpansionPanel Expanded="false">
                                     <TitleContent>
                                         <div class="d-flex align-center justify-space-between pr-2" style="width: 100%;">
                                             <div class="d-flex align-center gap-3">
@@ -288,7 +289,7 @@
                                         </div>
                                     </TitleContent>
                                     <ChildContent>
-                                        <MudTable Items="rb.ItemValues" Hover="true" Dense="true" Striped="true" Elevation="0">
+                                        <MudTable Items="rb.ItemValues" Hover="true" Dense="true" Striped="true" Elevation="0" Breakpoint="Breakpoint.Sm">
                                             <HeaderContent>
                                                 <MudTh>Tag</MudTh>
                                                 <MudTh>Descrição</MudTh>
@@ -365,7 +366,7 @@
 </MudGrid>
 
 @code {
-    private bool CanEdit => AuthService.HasRole(UserRole.Admin, UserRole.Operador);
+    private bool CanEdit => AuthService.HasRole(UserRole.Admin, UserRole.Operacao);
 
     private bool _isLoading;
     private List<Recipe> _allRecipes = [];

@@ -10,6 +10,8 @@ public interface IAuthService
 
     Task<(bool Success, string Message)> LoginAsync(string username, string password);
     Task<(bool Success, string Message)> RegisterUserAsync(string username, string password, string fullName, UserRole role);
+    Task<(bool Success, string Message)> ChangeCurrentUserPasswordAsync(string currentPassword, string newPassword);
+    Task<(bool Success, string Message)> ChangeUserRoleAsync(int userId, UserRole role);
     Task<List<User>> GetAllUsersAsync();
     Task DeleteUserAsync(int userId);
     void Logout();

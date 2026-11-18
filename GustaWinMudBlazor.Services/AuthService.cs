@@ -40,6 +40,12 @@ public class AuthService(IDbContextFactory<AppDbContext> dbFactory) : IAuthServi
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(fullName))
             return (false, "Preencha todos os campos obrigatórios.");
 
+        if (password.Length < 8)
+            return (false, "A senha deve ter pelo menos 8 caracteres.");
+
+        if (!Enum.IsDefined(role))
+            return (false, "Selecione um nível de permissão válido.");
+
         await using var db = await _dbFactory.CreateDbContextAsync();
         var normalized = username.Trim().ToLower();
 
@@ -59,6 +65,68 @@ public class AuthService(IDbContextFactory<AppDbContext> dbFactory) : IAuthServi
         db.Users.Add(newUser);
         await db.SaveChangesAsync();
         return (true, "Usuário cadastrado com sucesso!");
+    }
+
+    public async Task<(bool Success, string Message)> ChangeCurrentUserPasswordAsync(string currentPassword, string newPassword)
+    {
+        if (CurrentUser is null)
+            return (false, "Nenhum usuário está conectado.");
+
+        if (string.IsNullOrWhiteSpace(currentPassword) || string.IsNullOrWhiteSpace(newPassword))
+            return (false, "Informe a senha atual e a nova senha.");
+
+        if (newPassword.Length < 3)
+            return (false, "A nova senha deve ter pelo menos 8 caracteres.");
+
+        if (currentPassword == newPassword)
+            return (false, "A nova senha deve ser diferente da senha atual.");
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var user = await db.Users.FindAsync(CurrentUser.Id);
+        if (user is null)
+            return (false, "O usuário conectado não foi encontrado.");
+
+        if (user.PasswordHash != AppDbContext.HashPassword(currentPassword))
+            return (false, "A senha atual está incorreta.");
+
+        user.PasswordHash = AppDbContext.HashPassword(newPassword);
+        await db.SaveChangesAsync();
+        CurrentUser.PasswordHash = user.PasswordHash;
+        return (true, "Senha alterada com sucesso.");
+    }
+
+    public async Task<(bool Success, string Message)> ChangeUserRoleAsync(int userId, UserRole role)
+    {
+        if (CurrentUser is null || CurrentUser.Role != UserRole.Admin)
+            return (false, "Somente um administrador pode alterar permissões.");
+
+        if (!Enum.IsDefined(role))
+            return (false, "Selecione um nível de permissão válido.");
+
+        if (CurrentUser.Id == userId && role != UserRole.Admin)
+            return (false, "Não é possível remover sua própria permissão de administrador.");
+
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        var user = await db.Users.FindAsync(userId);
+        if (user is null)
+            return (false, "Usuário não encontrado.");
+
+        if (user.Role == UserRole.Admin && role != UserRole.Admin)
+        {
+            var otherAdminsExist = await db.Users.AnyAsync(u => u.Id != userId && u.Role == UserRole.Admin);
+            if (!otherAdminsExist)
+                return (false, "O sistema precisa manter pelo menos um administrador.");
+        }
+
+        user.Role = role;
+        await db.SaveChangesAsync();
+        if (CurrentUser.Id == userId)
+        {
+            CurrentUser.Role = role;
+            AuthStateChanged?.Invoke();
+        }
+
+        return (true, "Permissão atualizada com sucesso.");
     }
 
     public async Task<List<User>> GetAllUsersAsync()

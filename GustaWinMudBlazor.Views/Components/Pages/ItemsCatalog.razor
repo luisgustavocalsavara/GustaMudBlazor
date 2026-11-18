@@ -135,7 +135,7 @@
                 </MudItem>
             </MudGrid>
 
-            <MudTable T="RecipeItem" Items="_filteredItems" Hover="true" Dense="true" Striped="true" Loading="_isLoading">
+            <MudTable T="RecipeItem" Items="_filteredItems" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm">
                 <HeaderContent>
                     <MudTh>Mixer</MudTh>
                     <MudTh>Bloco</MudTh>
@@ -185,7 +185,7 @@
 </MudGrid>
 
 @code {
-    private bool CanEdit => AuthService.HasRole(UserRole.Admin, UserRole.Operador);
+    private bool CanEdit => AuthService.HasRole(UserRole.Admin, UserRole.Operacao);
 
     private bool _isLoading;
     private List<RecipeItem> _allItems = [];

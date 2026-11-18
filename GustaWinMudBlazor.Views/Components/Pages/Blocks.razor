@@ -139,6 +139,7 @@
 
             <MudTable T="Block"
                       Items="_filteredBlocks"
+                      Breakpoint="Breakpoint.Sm"
                       Hover="true"
                       Dense="true"
                       Loading="_isLoading"
@@ -285,7 +286,7 @@
                     </MudPaper>
                 }
 
-                <MudTable Items="_filteredItems" Hover="true" Dense="true" Striped="true">
+                <MudTable Items="_filteredItems" Hover="true" Dense="true" Striped="true" Breakpoint="Breakpoint.Sm">
                     <HeaderContent>
                         <MudTh>Tag</MudTh>
                         <MudTh>Descrição</MudTh>
@@ -325,7 +326,7 @@
 </MudGrid>
 
 @code {
-    private bool CanEdit => AuthService.HasRole(UserRole.Admin, UserRole.Operador);
+    private bool CanEdit => AuthService.HasRole(UserRole.Admin, UserRole.Operacao);
 
     private bool _isLoading;
     private List<Block> _allBlocks = [];

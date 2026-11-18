@@ -133,6 +133,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             db.Database.EnsureCreated();
             _ = db.RecipeMixers.Any();
             _ = db.Blocks.Select(b => b.MixerType).FirstOrDefault();
+            db.Database.ExecuteSqlRaw("UPDATE Usuarios SET Role = CASE Role WHEN 'Visualizador' THEN 'Manutencao' WHEN 'Operador' THEN 'Operacao' ELSE Role END WHERE Role IN ('Visualizador', 'Operador');");
         }
         catch (SqliteException ex)
         {
@@ -158,7 +159,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                     Username = "operador",
                     FullName = "Operador de Produção",
                     PasswordHash = HashPassword("op123"),
-                    Role = UserRole.Operador,
+                    Role = UserRole.Operacao,
                     CreatedAt = DateTime.Now
                 },
                 new User
@@ -166,7 +167,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                     Username = "visualizador",
                     FullName = "Consulta / Qualidade",
                     PasswordHash = HashPassword("vis123"),
-                    Role = UserRole.Visualizador,
+                    Role = UserRole.Manutencao,
                     CreatedAt = DateTime.Now
                 }
             );

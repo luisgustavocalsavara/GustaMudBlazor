@@ -80,7 +80,7 @@
                           Immediate="true"
                           Class="mb-3" />
 
-            <MudTable T="Recipe" Items="_filteredRecipes" Hover="true" Dense="true" Striped="true" Loading="_isLoading">
+            <MudTable T="Recipe" Items="_filteredRecipes" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm">
                 <HeaderContent>
                     <MudTh>ID</MudTh>
                     <MudTh>Nome da Receita</MudTh>
@@ -125,7 +125,7 @@
 </MudGrid>
 
 @code {
-    private bool CanEdit => AuthService.HasRole(UserRole.Admin, UserRole.Operador);
+    private bool CanEdit => AuthService.HasRole(UserRole.Admin, UserRole.Operacao);
 
     private bool _isLoading;
     private List<Recipe> _allRecipes = [];

@@ -2,9 +2,9 @@ namespace GustaMudBlazor.Models.Entities;
 
 public enum UserRole
 {
-    Visualizador = 0, // Apenas visualiza Home e Receitas (somente leitura)
-    Operador = 1,     // Pode criar, editar e excluir Receitas e Itens
-    Admin = 2         // Acesso total + Gerenciamento/Cadastro de Usuários
+    Manutencao = 0, // Apenas visualiza as telas
+    Operacao = 1,   // Pode criar, editar e excluir receitas, blocos e itens
+    Admin = 2       // Acesso total + gerenciamento de usuários
 }
 
 public class User
@@ -13,6 +13,6 @@ public class User
     public string Username { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
-    public UserRole Role { get; set; } = UserRole.Operador;
+    public UserRole Role { get; set; } = UserRole.Operacao;
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 }

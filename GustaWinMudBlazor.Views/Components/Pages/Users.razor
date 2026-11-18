@@ -28,12 +28,12 @@ else
 
                 <MudTextField @bind-Value="_newFullName" Label="Nome Completo" Variant="Variant.Outlined" Class="mb-3" />
                 <MudTextField @bind-Value="_newUsername" Label="Login (Username)" Variant="Variant.Outlined" Class="mb-3" />
-                <MudTextField @bind-Value="_newPassword" Label="Senha" InputType="InputType.Password" Variant="Variant.Outlined" Class="mb-3" />
+                <MudTextField @bind-Value="_newPassword" Label="Senha (mínimo 8 caracteres)" InputType="InputType.Password" Variant="Variant.Outlined" Class="mb-3" />
 
-                <MudSelect T="UserRole" @bind-Value="_newRole" Label="Nível de Permissão" Variant="Variant.Outlined" Class="mb-4">
-                    <MudSelectItem Value="UserRole.Visualizador">Visualizador (Somente Leitura)</MudSelectItem>
-                    <MudSelectItem Value="UserRole.Operador">Operador (Edita Receitas/Itens)</MudSelectItem>
-                    <MudSelectItem Value="UserRole.Admin">Administrador (Acesso Total)</MudSelectItem>
+                <MudSelect T="UserRole" @bind-Value="_newRole" Label="Permissão" Variant="Variant.Outlined" Class="mb-4">
+                    <MudSelectItem Value="UserRole.Manutencao">Manutenção (Somente leitura)</MudSelectItem>
+                    <MudSelectItem Value="UserRole.Operacao">Operação (Editar cadastros)</MudSelectItem>
+                    <MudSelectItem Value="UserRole.Admin">Admin (Acesso total)</MudSelectItem>
                 </MudSelect>
 
                 <MudButton Variant="Variant.Filled"
@@ -51,7 +51,7 @@ else
             <MudPaper Class="pa-4" Elevation="2">
                 <MudText Typo="Typo.h6" Class="mb-3">Usuários Cadastrados</MudText>
 
-                <MudTable Items="_users" Hover="true" Dense="true" Striped="true" Loading="_isLoading">
+                <MudTable Items="_users" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm">
                     <HeaderContent>
                         <MudTh>Usuário</MudTh>
                         <MudTh>Nome</MudTh>
@@ -63,9 +63,27 @@ else
                         <MudTd DataLabel="Usuário"><b>@context.Username</b></MudTd>
                         <MudTd DataLabel="Nome">@context.FullName</MudTd>
                         <MudTd DataLabel="Permissão">
-                            <MudChip T="string" Size="Size.Small" Color="@(context.Role == UserRole.Admin ? Color.Secondary : context.Role == UserRole.Operador ? Color.Info : Color.Default)">
-                                @context.Role
-                            </MudChip>
+                            <div class="d-flex align-center gap-2">
+                                <MudSelect T="UserRole"
+                                           Value="@GetSelectedRole(context)"
+                                           ValueChanged="@((UserRole role) => SetSelectedRole(context.Id, role))"
+                                           Dense="true"
+                                           Margin="Margin.Dense"
+                                           Disabled="@(_isLoading || AuthService.CurrentUser?.Id == context.Id)">
+                                    <MudSelectItem Value="UserRole.Manutencao">Manutenção</MudSelectItem>
+                                    <MudSelectItem Value="UserRole.Operacao">Operação</MudSelectItem>
+                                    <MudSelectItem Value="UserRole.Admin">Admin</MudSelectItem>
+                                </MudSelect>
+                                @if (AuthService.CurrentUser?.Id != context.Id)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Save"
+                                                   Color="Color.Primary"
+                                                   Size="Size.Small"
+                                                   Disabled="@(_isLoading || GetSelectedRole(context) == context.Role)"
+                                                   OnClick="@(() => SaveUserRoleAsync(context))"
+                                                   Title="Salvar permissão" />
+                                }
+                            </div>
                         </MudTd>
                         <MudTd DataLabel="Criado em">@context.CreatedAt.ToString("dd/MM/yyyy HH:mm")</MudTd>
                         <MudTd>
@@ -88,7 +106,8 @@ else
     private string _newUsername = string.Empty;
     private string _newPassword = string.Empty;
     private string _newFullName = string.Empty;
-    private UserRole _newRole = UserRole.Operador;
+    private UserRole _newRole = UserRole.Operacao;
+    private readonly Dictionary<int, UserRole> _selectedRoles = [];
     private string? _errorMessage;
     private string? _successMessage;
     private bool _isLoading;
@@ -130,9 +149,39 @@ else
                 _newUsername = string.Empty;
                 _newPassword = string.Empty;
                 _newFullName = string.Empty;
-                _newRole = UserRole.Operador;
+                _newRole = UserRole.Operacao;
                 _users = await AuthService.GetAllUsersAsync();
+                _selectedRoles.Clear();
             }
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private UserRole GetSelectedRole(User user) => _selectedRoles.TryGetValue(user.Id, out var role) ? role : user.Role;
+
+    private void SetSelectedRole(int userId, UserRole role) => _selectedRoles[userId] = role;
+
+    private async Task SaveUserRoleAsync(User user)
+    {
+        _errorMessage = null;
+        _successMessage = null;
+        _isLoading = true;
+        try
+        {
+            var (success, message) = await AuthService.ChangeUserRoleAsync(user.Id, GetSelectedRole(user));
+            if (!success)
+            {
+                _errorMessage = message;
+                _selectedRoles.Remove(user.Id);
+                return;
+            }
+
+            _successMessage = message;
+            _users = await AuthService.GetAllUsersAsync();
+            _selectedRoles.Clear();
         }
         finally
         {

@@ -7,3 +7,52 @@ html, body {
 #app {
     min-height: 100%;
 }
+
+.app-main-content {
+    box-sizing: border-box;
+    min-width: 0;
+    width: 100%;
+    padding: 1.25rem 1.5rem 2rem;
+}
+
+.app-page,
+.app-page .mud-grid-item,
+.app-page .mud-paper {
+    min-width: 0;
+}
+
+.app-page {
+    width: 100%;
+}
+
+.app-page .mud-table-container {
+    max-width: 100%;
+}
+
+.app-page .mud-typography,
+.app-page code {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+    .app-main-content {
+        padding: 0.75rem 0.75rem 1.25rem;
+    }
+
+    .app-page .mud-paper {
+        padding: 12px !important;
+    }
+
+    .app-page .d-flex.justify-space-between {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .app-page .mud-table-cell {
+        padding: 6px 8px;
+    }
+
+    .mud-appbar .mud-typography-h6 {
+        font-size: 1rem;
+    }
+}

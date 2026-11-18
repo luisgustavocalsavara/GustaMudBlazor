@@ -2,6 +2,8 @@
 @implements IDisposable
 @inject ISettingsService SettingsService
 @inject IAuthService AuthService
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
 @inject IJSRuntime JS
 
 <MudThemeProvider Theme="@AppTheme.Default" IsDarkMode="@_isDarkMode" />
@@ -38,6 +40,11 @@ else
                 @AuthService.CurrentUser?.FullName (@AuthService.CurrentUser?.Role)
             </MudChip>
 
+            <MudTooltip Text="Alterar minha senha">
+                <MudIconButton Icon="@Icons.Material.Filled.Key"
+                               Color="Color.Inherit"
+                               OnClick="OpenChangePasswordDialogAsync" />
+            </MudTooltip>
             <DarkModeToggleButton />
             <MudTooltip Text="Encerrar Sessão (Logout)">
                 <MudIconButton Icon="@Icons.Material.Filled.Logout"
@@ -46,18 +53,20 @@ else
             </MudTooltip>
         </MudAppBar>
 
-        <MudDrawer id="nav-drawer" @bind-Open="_isDrawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+        <MudDrawer id="nav-drawer" @bind-Open="_isDrawerOpen" Variant="DrawerVariant.Temporary" ClipMode="DrawerClipMode.Never" Elevation="2">
             <NavMenu />           
         </MudDrawer>
 
-        <MudMainContent Class="mt-16 pa-4">
-            @Body
+        <MudMainContent Class="mt-16 app-main-content">
+            <div class="app-page">
+                @Body
+            </div>
         </MudMainContent>
     </MudLayout>
 }
 
 @code {
-    private bool _isDrawerOpen = true;
+    private bool _isDrawerOpen;
     private bool _isDarkMode;
 
     protected override void OnInitialized()
@@ -66,6 +75,7 @@ else
 
         SettingsService.SettingsChanged += OnSettingsChanged;
         AuthService.AuthStateChanged += OnAuthStateChanged;
+        NavigationManager.LocationChanged += OnLocationChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -87,10 +97,28 @@ else
 
     private void OnAuthStateChanged()
     {
-        _ = InvokeAsync(StateHasChanged);
+        _ = InvokeAsync(() =>
+        {
+            _isDrawerOpen = false;
+            StateHasChanged();
+        });
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        _ = InvokeAsync(() =>
+        {
+            _isDrawerOpen = false;
+            StateHasChanged();
+        });
     }
 
     private void ToggleDrawer() => _isDrawerOpen = !_isDrawerOpen;
+
+    private async Task OpenChangePasswordDialogAsync()
+    {
+        await DialogService.ShowAsync<ChangePasswordDialog>("Alterar minha senha");
+    }
 
     private void Logout() => AuthService.Logout();
 
@@ -98,5 +126,6 @@ else
     {
         SettingsService.SettingsChanged -= OnSettingsChanged;
         AuthService.AuthStateChanged -= OnAuthStateChanged;
+        NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }
