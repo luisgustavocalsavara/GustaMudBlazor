@@ -13,9 +13,7 @@
     </div>
     @if (!string.IsNullOrEmpty(_statusMessage))
     {
-        <MudChip T="string" Color="@(_hasError ? Color.Error : Color.Success)" Variant="Variant.Filled">
-            @_statusMessage
-        </MudChip>
+        <DismissibleMudAlert Severity="@(_hasError ? Severity.Error : Severity.Success)" OnClose="ClearStatusMessage">@_statusMessage</DismissibleMudAlert>
     }
 </div>
 
@@ -86,7 +84,7 @@
 <MudPaper Elevation="2" Class="pa-4">
     @if (_recipeExportData is null)
     {
-        <MudAlert Severity="Severity.Info">Selecione uma receita acima para carregar a tabela de itens instanciados.</MudAlert>
+        <DismissibleMudAlert Severity="Severity.Info">Selecione uma receita acima para carregar a tabela de itens instanciados.</DismissibleMudAlert>
     }
     else
     {
@@ -261,6 +259,8 @@
 
         _filteredRows = query.ToList();
     }
+
+    private void ClearStatusMessage() => _statusMessage = null;
 
     private async Task Export(IPlcReportGenerator generator)
     {

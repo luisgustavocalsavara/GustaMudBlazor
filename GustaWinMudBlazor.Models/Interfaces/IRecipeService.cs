@@ -1,3 +1,4 @@
+using GustaMudBlazor.Models.DTOs;
 using GustaMudBlazor.Models.Entities;
 
 namespace GustaMudBlazor.Models.Interfaces;
@@ -5,6 +6,7 @@ namespace GustaMudBlazor.Models.Interfaces;
 public interface IRecipeService
 {
     Task<List<Recipe>> GetAllRecipesAsync();
+    Task<List<RecipeSummary>> GetRecipeSummariesAsync();
     Task<Recipe?> GetRecipeWithMixersAsync(int recipeId);
     Task<Recipe> SaveRecipeAsync(Recipe recipe);
     Task DeleteRecipeAsync(int recipeId);

@@ -94,15 +94,46 @@ public class BlockService(IDbContextFactory<AppDbContext> dbFactory) : IBlockSer
         }
     }
 
+    public async Task<List<Block>> GetBlockSummariesAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.Blocks
+            .AsNoTracking()
+            .OrderBy(b => b.MixerType)
+            .ThenBy(b => b.Code)
+            .Select(b => new Block
+            {
+                Id = b.Id,
+                MixerType = b.MixerType,
+                Code = b.Code,
+                Name = b.Name
+            })
+            .ToListAsync();
+    }
+
     public async Task<List<RecipeItem>> GetAllBlockItemsAsync()
     {
         await using var db = await _dbFactory.CreateDbContextAsync();
         return await db.RecipeItems
             .AsNoTracking()
-            .Include(i => i.Block)
             .OrderBy(i => i.Block!.MixerType)
             .ThenBy(i => i.Block!.Code)
             .ThenBy(i => i.Tag)
+            .Select(i => new RecipeItem
+            {
+                Id = i.Id,
+                BlockId = i.BlockId,
+                Tag = i.Tag,
+                Description = i.Description,
+                DataType = i.DataType,
+                Block = new Block
+                {
+                    Id = i.Block!.Id,
+                    MixerType = i.Block.MixerType,
+                    Code = i.Block.Code,
+                    Name = i.Block.Name
+                }
+            })
             .ToListAsync();
     }
 

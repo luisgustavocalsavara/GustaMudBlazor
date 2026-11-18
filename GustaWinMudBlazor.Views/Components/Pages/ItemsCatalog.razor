@@ -9,9 +9,7 @@
     <MudText Typo="Typo.h5">Cadastro Dedicado de Itens (Tags dos Blocos)</MudText>
     @if (!string.IsNullOrEmpty(_statusMessage))
     {
-        <MudChip T="string" Color="@(_hasError ? Color.Error : Color.Success)" Variant="Variant.Filled">
-            @_statusMessage
-        </MudChip>
+        <DismissibleMudAlert Severity="@(_hasError ? Severity.Error : Severity.Success)" OnClose="ClearStatusMessage">@_statusMessage</DismissibleMudAlert>
     }
 </div>
 
@@ -135,8 +133,9 @@
                 </MudItem>
             </MudGrid>
 
-            <MudTable T="RecipeItem" Items="_filteredItems" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm">
-                <HeaderContent>
+            <div class="crud-table-scroll">
+                <MudTable T="RecipeItem" Items="_filteredItems" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm">
+                    <HeaderContent>
                     <MudTh>Mixer</MudTh>
                     <MudTh>Bloco</MudTh>
                     <MudTh>Tag</MudTh>
@@ -176,11 +175,12 @@
                         </MudTd>
                     }
                 </RowTemplate>
-                <NoRecordsContent>
-                    <MudText Typo="Typo.body2" Class="pa-2">Nenhum item encontrado.</MudText>
-                </NoRecordsContent>
-            </MudTable>
-        </MudPaper>
+                            <NoRecordsContent>
+                                <MudText Typo="Typo.body2" Class="pa-2">Nenhum item encontrado.</MudText>
+                            </NoRecordsContent>
+                        </MudTable>
+                    </div>
+                </MudPaper>
     </MudItem>
 </MudGrid>
 
@@ -252,7 +252,7 @@
         _isLoading = true;
         try
         {
-            _allBlocks = await BlockService.GetAllBlocksAsync();
+            _allBlocks = await BlockService.GetBlockSummariesAsync();
             _allItems = await BlockService.GetAllBlockItemsAsync();
 
             if (_selectedBlockId is null && _allBlocks.Count > 0)
@@ -296,6 +296,8 @@
 
         _filteredItems = query.ToList();
     }
+
+    private void ClearStatusMessage() => _statusMessage = null;
 
     private void StartNewItem()
     {
@@ -344,14 +346,26 @@
 
         try
         {
-            await BlockService.SaveBlockItemAsync(item);
+            var isNewItem = _editingItemId == 0;
+            var savedItem = await BlockService.SaveBlockItemAsync(item);
+            savedItem.Block = _allBlocks.FirstOrDefault(block => block.Id == savedItem.BlockId);
+
+            var existingIndex = _allItems.FindIndex(existing => existing.Id == savedItem.Id);
+            if (existingIndex >= 0)
+            {
+                _allItems[existingIndex] = savedItem;
+            }
+            else
+            {
+                _allItems.Add(savedItem);
+            }
+
+            ApplyFilter();
+            StartNewItem();
             _hasError = false;
-            _statusMessage = _editingItemId == 0
+            _statusMessage = isNewItem
                 ? "Novo item cadastrado com sucesso!"
                 : "Item atualizado com sucesso!";
-
-            StartNewItem();
-            await LoadDataAsync();
         }
         catch (Exception ex)
         {
@@ -369,6 +383,8 @@
         if (result is null || result.Canceled) return;
 
         await BlockService.DeleteBlockItemAsync(item.Id);
+        _allItems.RemoveAll(existing => existing.Id == item.Id);
+        ApplyFilter();
         if (_editingItemId == item.Id)
         {
             StartNewItem();
@@ -376,6 +392,5 @@
 
         _hasError = false;
         _statusMessage = $"Item '{item.Tag}' excluído.";
-        await LoadDataAsync();
     }
 }

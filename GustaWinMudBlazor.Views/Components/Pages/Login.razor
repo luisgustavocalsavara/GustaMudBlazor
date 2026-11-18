@@ -11,7 +11,7 @@
 
     @if (!string.IsNullOrEmpty(_errorMessage))
     {
-        <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3">@_errorMessage</MudAlert>
+        <DismissibleMudAlert Severity="Severity.Error" Dense="true" OnClose="ClearErrorMessage" Class="mb-3">@_errorMessage</DismissibleMudAlert>
     }
 
     <MudTextField @bind-Value="_username"
@@ -53,6 +53,8 @@
     private string _password = string.Empty;
     private string? _errorMessage;
     private bool _isLoading;
+
+    private void ClearErrorMessage() => _errorMessage = null;
 
     private async Task LoginAsync()
     {

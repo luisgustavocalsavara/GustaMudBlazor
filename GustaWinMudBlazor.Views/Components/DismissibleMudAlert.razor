@@ -1,0 +1,44 @@
+@if (!_isDismissed)
+{
+    <MudAlert Severity="@Severity"
+              Dense="@Dense"
+              ShowCloseIcon="false"
+              Class="@Class">
+        <div class="d-flex align-start justify-space-between gap-2">
+            <div class="flex-grow-1">
+                @ChildContent
+            </div>
+            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                           Size="Size.Small"
+                           Color="Color.Inherit"
+                           Class="pa-0"
+                           AriaLabel="Fechar alerta"
+                           OnClick="Close" />
+        </div>
+    </MudAlert>
+}
+
+@code {
+    [Parameter]
+    public Severity Severity { get; set; } = Severity.Normal;
+
+    [Parameter]
+    public bool Dense { get; set; }
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private bool _isDismissed;
+
+    private async Task Close()
+    {
+        _isDismissed = true;
+        await OnClose.InvokeAsync();
+    }
+}

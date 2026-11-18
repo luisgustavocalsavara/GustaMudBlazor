@@ -10,6 +10,7 @@ public interface IBlockService
     Task<Block> SaveBlockAsync(Block block);
     Task DeleteBlockAsync(int blockId);
 
+    Task<List<Block>> GetBlockSummariesAsync();
     Task<List<RecipeItem>> GetAllBlockItemsAsync();
     Task<RecipeItem> SaveBlockItemAsync(RecipeItem item);
     Task DeleteBlockItemAsync(int itemId);

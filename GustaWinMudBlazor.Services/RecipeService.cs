@@ -1,3 +1,4 @@
+using GustaMudBlazor.Models.DTOs;
 using GustaMudBlazor.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using GustaMudBlazor.Models.Interfaces;
@@ -26,6 +27,21 @@ public class RecipeService(IDbContextFactory<AppDbContext> dbFactory) : IRecipeS
                 .ThenInclude(m => m.RecipeBlocks.OrderBy(rb => rb.SequenceOrder))
                     .ThenInclude(rb => rb.Block)
             .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync();
+    }
+
+    public async Task<List<RecipeSummary>> GetRecipeSummariesAsync()
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync();
+        return await db.Recipes
+            .AsNoTracking()
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(r => new RecipeSummary(
+                r.Id,
+                r.Name,
+                r.Sku,
+                r.CreatedAt,
+                r.Mixers.SelectMany(m => m.RecipeBlocks).Count()))
             .ToListAsync();
     }
 

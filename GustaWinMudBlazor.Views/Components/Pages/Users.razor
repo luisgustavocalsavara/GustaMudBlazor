@@ -6,7 +6,7 @@
 
 @if (!AuthService.HasRole(UserRole.Admin))
 {
-    <MudAlert Severity="Severity.Error">Você não tem permissão de Administrador para acessar esta página.</MudAlert>
+    <DismissibleMudAlert Severity="Severity.Error">Você não tem permissão de Administrador para acessar esta página.</DismissibleMudAlert>
 }
 else
 {
@@ -19,11 +19,11 @@ else
 
                 @if (!string.IsNullOrEmpty(_errorMessage))
                 {
-                    <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3">@_errorMessage</MudAlert>
+                    <DismissibleMudAlert Severity="Severity.Error" Dense="true" OnClose="ClearErrorMessage" Class="mb-3">@_errorMessage</DismissibleMudAlert>
                 }
                 @if (!string.IsNullOrEmpty(_successMessage))
                 {
-                    <MudAlert Severity="Severity.Success" Dense="true" Class="mb-3">@_successMessage</MudAlert>
+                    <DismissibleMudAlert Severity="Severity.Success" Dense="true" OnClose="ClearSuccessMessage" Class="mb-3">@_successMessage</DismissibleMudAlert>
                 }
 
                 <MudTextField @bind-Value="_newFullName" Label="Nome Completo" Variant="Variant.Outlined" Class="mb-3" />
@@ -159,6 +159,10 @@ else
             _isLoading = false;
         }
     }
+
+    private void ClearErrorMessage() => _errorMessage = null;
+
+    private void ClearSuccessMessage() => _successMessage = null;
 
     private UserRole GetSelectedRole(User user) => _selectedRoles.TryGetValue(user.Id, out var role) ? role : user.Role;
 

@@ -9,9 +9,7 @@
     <MudText Typo="Typo.h5">Cadastro de Blocos por Mixer e Itens Estruturais</MudText>
     @if (!string.IsNullOrEmpty(_statusMessage))
     {
-        <MudChip T="string" Color="@(_hasError ? Color.Error : Color.Success)" Variant="Variant.Filled">
-            @_statusMessage
-        </MudChip>
+        <DismissibleMudAlert Severity="@(_hasError ? Severity.Error : Severity.Success)" OnClose="ClearStatusMessage">@_statusMessage</DismissibleMudAlert>
     }
 </div>
 
@@ -137,14 +135,15 @@
                 </MudPaper>
             }
 
-            <MudTable T="Block"
-                      Items="_filteredBlocks"
-                      Breakpoint="Breakpoint.Sm"
-                      Hover="true"
-                      Dense="true"
-                      Loading="_isLoading"
-                      RowClassFunc="@((block, _) => _selectedBlock?.Id == block.Id ? "mud-theme-primary" : "")"
-                      OnRowClick="@((TableRowClickEventArgs<Block> args) => SelectBlockAsync(args.Item))">
+            <div class="crud-table-scroll">
+                <MudTable T="Block"
+                          Items="_filteredBlocks"
+                          Breakpoint="Breakpoint.Sm"
+                          Hover="true"
+                          Dense="true"
+                          Loading="_isLoading"
+                          RowClassFunc="@((block, _) => _selectedBlock?.Id == block.Id ? "mud-theme-primary" : "")"
+                          OnRowClick="@((TableRowClickEventArgs<Block> args) => SelectBlockAsync(args.Item))">
                 <HeaderContent>
                     <MudTh>Ícone</MudTh>
                     <MudTh>Mixer</MudTh>
@@ -197,11 +196,12 @@
                         </MudTd>
                     }
                 </RowTemplate>
-                <NoRecordsContent>
-                    <MudText Typo="Typo.body2" Class="pa-2">Nenhum bloco encontrado.</MudText>
-                </NoRecordsContent>
-            </MudTable>
-        </MudPaper>
+                            <NoRecordsContent>
+                                <MudText Typo="Typo.body2" Class="pa-2">Nenhum bloco encontrado.</MudText>
+                            </NoRecordsContent>
+                        </MudTable>
+                    </div>
+                </MudPaper>
     </MudItem>
 
     <!-- COLUNA DIREITA: ITENS ESTRUTURAIS DO BLOCO SELECIONADO (1:N) -->
@@ -209,7 +209,7 @@
         <MudPaper Elevation="2" Class="pa-4">
             @if (_selectedBlock is null)
             {
-                <MudAlert Severity="Severity.Info">Selecione um bloco ao lado para visualizar e gerenciar seus itens estruturais.</MudAlert>
+                <DismissibleMudAlert Severity="Severity.Info">Selecione um bloco ao lado para visualizar e gerenciar seus itens estruturais.</DismissibleMudAlert>
             }
             else
             {
@@ -286,8 +286,9 @@
                     </MudPaper>
                 }
 
-                <MudTable Items="_filteredItems" Hover="true" Dense="true" Striped="true" Breakpoint="Breakpoint.Sm">
-                    <HeaderContent>
+                <div class="crud-table-scroll">
+                    <MudTable Items="_filteredItems" Hover="true" Dense="true" Striped="true" Breakpoint="Breakpoint.Sm">
+                        <HeaderContent>
                         <MudTh>Tag</MudTh>
                         <MudTh>Descrição</MudTh>
                         <MudTh>Tipo de Dado</MudTh>
@@ -316,11 +317,12 @@
                             </MudTd>
                         }
                     </RowTemplate>
-                    <NoRecordsContent>
-                        <MudText Typo="Typo.body2" Class="pa-2">Nenhum item cadastrado neste bloco.</MudText>
-                    </NoRecordsContent>
-                </MudTable>
-            }
+                                <NoRecordsContent>
+                                    <MudText Typo="Typo.body2" Class="pa-2">Nenhum item cadastrado neste bloco.</MudText>
+                                </NoRecordsContent>
+                            </MudTable>
+                        </div>
+                    }
         </MudPaper>
     </MudItem>
 </MudGrid>
@@ -479,6 +481,8 @@
                 i.Description.Contains(term, StringComparison.OrdinalIgnoreCase))
             .ToList();
     }
+
+    private void ClearStatusMessage() => _statusMessage = null;
 
     private void StartNewBlock()
     {

@@ -9,9 +9,7 @@
     <MudText Typo="Typo.h5">Cadastro Dedicado de Blocos (Por Mixer)</MudText>
     @if (!string.IsNullOrEmpty(_statusMessage))
     {
-        <MudChip T="string" Color="@(_hasError ? Color.Error : Color.Success)" Variant="Variant.Filled">
-            @_statusMessage
-        </MudChip>
+        <DismissibleMudAlert Severity="@(_hasError ? Severity.Error : Severity.Success)" OnClose="ClearStatusMessage">@_statusMessage</DismissibleMudAlert>
     }
 </div>
 
@@ -149,8 +147,9 @@
                 </MudItem>
             </MudGrid>
 
-            <MudTable T="Block" Items="_filteredBlocks" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm">
-                <HeaderContent>
+            <div class="crud-table-scroll">
+                <MudTable T="Block" Items="_filteredBlocks" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm">
+                    <HeaderContent>
                     <MudTh>Ícone</MudTh>
                     <MudTh>Mixer Exclusivo</MudTh>
                     <MudTh>Código</MudTh>
@@ -198,11 +197,12 @@
                         </MudTd>
                     }
                 </RowTemplate>
-                <NoRecordsContent>
-                    <MudText Typo="Typo.body2" Class="pa-2">Nenhum bloco encontrado.</MudText>
-                </NoRecordsContent>
-            </MudTable>
-        </MudPaper>
+                            <NoRecordsContent>
+                                <MudText Typo="Typo.body2" Class="pa-2">Nenhum bloco encontrado.</MudText>
+                            </NoRecordsContent>
+                        </MudTable>
+                    </div>
+                </MudPaper>
     </MudItem>
 </MudGrid>
 
@@ -293,6 +293,8 @@
 
         _filteredBlocks = query.ToList();
     }
+
+    private void ClearStatusMessage() => _statusMessage = null;
 
     private void StartNewBlock()
     {

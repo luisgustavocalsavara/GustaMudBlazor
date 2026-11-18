@@ -1,4 +1,5 @@
 @page "/cadastro-receitas"
+@using GustaMudBlazor.Models.DTOs
 @inject IRecipeService RecipeService
 @inject IAuthService AuthService
 @inject IDialogService DialogService
@@ -9,9 +10,7 @@
     <MudText Typo="Typo.h5">Cadastro Dedicado de Receitas</MudText>
     @if (!string.IsNullOrEmpty(_statusMessage))
     {
-        <MudChip T="string" Color="@(_hasError ? Color.Error : Color.Success)" Variant="Variant.Filled">
-            @_statusMessage
-        </MudChip>
+        <DismissibleMudAlert Severity="@(_hasError ? Severity.Error : Severity.Success)" OnClose="ClearStatusMessage">@_statusMessage</DismissibleMudAlert>
     }
 </div>
 
@@ -80,8 +79,9 @@
                           Immediate="true"
                           Class="mb-3" />
 
-            <MudTable T="Recipe" Items="_filteredRecipes" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm">
-                <HeaderContent>
+            <div class="crud-table-scroll">
+                <MudTable T="RecipeSummary" Items="_filteredRecipes" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm">
+                    <HeaderContent>
                     <MudTh>ID</MudTh>
                     <MudTh>Nome da Receita</MudTh>
                     <MudTh>SKU</MudTh>
@@ -99,7 +99,7 @@
                     <MudTd DataLabel="Data de Criação">@context.CreatedAt.ToString("dd/MM/yyyy HH:mm")</MudTd>
                     <MudTd DataLabel="Mixers">
                         <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info">
-                            @context.Mixers.Sum(m => m.RecipeBlocks.Count) blocos nos 4 Mixers
+                            @context.BlockCount blocos nos 4 Mixers
                         </MudChip>
                     </MudTd>
                     @if (CanEdit)
@@ -116,11 +116,12 @@
                         </MudTd>
                     }
                 </RowTemplate>
-                <NoRecordsContent>
-                    <MudText Typo="Typo.body2" Class="pa-2">Nenhuma receita encontrada.</MudText>
-                </NoRecordsContent>
-            </MudTable>
-        </MudPaper>
+                            <NoRecordsContent>
+                                <MudText Typo="Typo.body2" Class="pa-2">Nenhuma receita encontrada.</MudText>
+                            </NoRecordsContent>
+                        </MudTable>
+                    </div>
+                </MudPaper>
     </MudItem>
 </MudGrid>
 
@@ -128,8 +129,8 @@
     private bool CanEdit => AuthService.HasRole(UserRole.Admin, UserRole.Operacao);
 
     private bool _isLoading;
-    private List<Recipe> _allRecipes = [];
-    private List<Recipe> _filteredRecipes = [];
+    private List<RecipeSummary> _allRecipes = [];
+    private List<RecipeSummary> _filteredRecipes = [];
 
     private string _recipeSearchTerm = string.Empty;
     private string RecipeSearchTerm
@@ -162,7 +163,7 @@
         _isLoading = true;
         try
         {
-            _allRecipes = await RecipeService.GetAllRecipesAsync();
+            _allRecipes = await RecipeService.GetRecipeSummariesAsync();
             ApplyRecipeFilter();
         }
         finally
@@ -188,6 +189,8 @@
             .ToList();
     }
 
+    private void ClearStatusMessage() => _statusMessage = null;
+
     private void StartNewRecipe()
     {
         _editingRecipeId = 0;
@@ -196,7 +199,7 @@
         _statusMessage = null;
     }
 
-    private void StartEditRecipe(Recipe recipe)
+    private void StartEditRecipe(RecipeSummary recipe)
     {
         _editingRecipeId = recipe.Id;
         _recipeName = recipe.Name;
@@ -236,7 +239,7 @@
         }
     }
 
-    private async Task DeleteRecipeAsync(Recipe recipe)
+    private async Task DeleteRecipeAsync(RecipeSummary recipe)
     {
         var parameters = new DialogParameters();
         parameters.Add("ContentText", $"Deseja realmente excluir a receita '{recipe.Name}'?");

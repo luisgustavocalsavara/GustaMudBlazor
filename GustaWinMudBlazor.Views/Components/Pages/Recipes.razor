@@ -1,4 +1,5 @@
 @page "/receitas"
+@using GustaMudBlazor.Models.DTOs
 @inject IRecipeService RecipeService
 @inject IBlockService BlockService
 @inject IAuthService AuthService
@@ -10,9 +11,7 @@
     <MudText Typo="Typo.h5">Gerenciamento de Receitas, Mixers (100 a 400) e Blocos</MudText>
     @if (!string.IsNullOrEmpty(_statusMessage))
     {
-        <MudChip T="string" Color="@(_hasError ? Color.Error : Color.Success)" Variant="Variant.Filled">
-            @_statusMessage
-        </MudChip>
+        <DismissibleMudAlert Severity="@(_hasError ? Severity.Error : Severity.Success)" OnClose="ClearStatusMessage">@_statusMessage</DismissibleMudAlert>
     }
 </div>
 
@@ -60,14 +59,15 @@
                 </MudPaper>
             }
 
-            <MudTable T="Recipe"
-                      Items="_filteredRecipes"
-                      Breakpoint="Breakpoint.Sm"
-                      Hover="true"
-                      Dense="true"
-                      Loading="_isLoading"
-                      RowClassFunc="@((recipe, _) => _selectedRecipe?.Id == recipe.Id ? "mud-theme-primary" : "")"
-                      OnRowClick="@((TableRowClickEventArgs<Recipe> args) => SelectRecipeAsync(args.Item))">
+            <div class="crud-table-scroll">
+                <MudTable T="RecipeSummary"
+                          Items="_filteredRecipes"
+                          Breakpoint="Breakpoint.Sm"
+                          Hover="true"
+                          Dense="true"
+                          Loading="_isLoading"
+                          RowClassFunc="@((recipe, _) => _selectedRecipe?.Id == recipe.Id ? "mud-theme-primary" : "")"
+                          OnRowClick="@((TableRowClickEventArgs<RecipeSummary> args) => SelectRecipeAsync(args.Item))">
                 <HeaderContent>
                     <MudTh>Nome</MudTh>
                     <MudTh>SKU</MudTh>
@@ -95,11 +95,12 @@
                         </MudTd>
                     }
                 </RowTemplate>
-                <NoRecordsContent>
-                    <MudText Typo="Typo.body2" Class="pa-2">Nenhuma receita encontrada.</MudText>
-                </NoRecordsContent>
-            </MudTable>
-        </MudPaper>
+                            <NoRecordsContent>
+                                <MudText Typo="Typo.body2" Class="pa-2">Nenhuma receita encontrada.</MudText>
+                            </NoRecordsContent>
+                        </MudTable>
+                    </div>
+                </MudPaper>
     </MudItem>
 
     <!-- COLUNA DIREITA: OS 4 MIXERS DA RECEITA (100, 200, 300, 400) E SEUS BLOCOS EXCLUSIVOS -->
@@ -107,7 +108,7 @@
         <MudPaper Elevation="2" Class="pa-4">
             @if (_selectedRecipe is null)
             {
-                <MudAlert Severity="Severity.Info">Selecione uma receita ao lado para visualizar seus 4 Mixers (100, 200, 300, 400), seus Blocos e configurar os Valores dos Itens.</MudAlert>
+                <DismissibleMudAlert Severity="Severity.Info">Selecione uma receita ao lado para visualizar seus 4 Mixers (100, 200, 300, 400), seus Blocos e configurar os Valores dos Itens.</DismissibleMudAlert>
             }
             else
             {
@@ -206,9 +207,9 @@
 
                     @if (_filteredRecipeBlocks.Count == 0)
                     {
-                        <MudAlert Severity="Severity.Normal" Dense="true">
+                        <DismissibleMudAlert Severity="Severity.Normal" Dense="true">
                             Nenhum bloco inserido ou encontrado no <b>@_selectedRecipeMixer.Name</b> desta receita.
-                        </MudAlert>
+                        </DismissibleMudAlert>
                     }
                     else
                     {
@@ -369,9 +370,9 @@
     private bool CanEdit => AuthService.HasRole(UserRole.Admin, UserRole.Operacao);
 
     private bool _isLoading;
-    private List<Recipe> _allRecipes = [];
+    private List<RecipeSummary> _allRecipes = [];
     private List<RecipeBlock> _allSelectedMixerBlocks = [];
-    private List<Recipe> _filteredRecipes = [];
+    private List<RecipeSummary> _filteredRecipes = [];
     private Recipe? _selectedRecipe;
 
     private List<RecipeMixer> _recipeMixers = [];
@@ -437,17 +438,8 @@
         _isLoading = true;
         try
         {
-            _allRecipes = await RecipeService.GetAllRecipesAsync();
+            _allRecipes = await RecipeService.GetRecipeSummariesAsync();
             ApplyRecipeFilter();
-
-            if (_selectedRecipe is not null)
-            {
-                await SelectRecipeAsync(_selectedRecipe);
-            }
-            else if (_filteredRecipes.Count > 0)
-            {
-                await SelectRecipeAsync(_filteredRecipes[0]);
-            }
         }
         finally
         {
@@ -455,7 +447,7 @@
         }
     }
 
-    private async Task SelectRecipeAsync(Recipe? recipe)
+    private async Task SelectRecipeAsync(RecipeSummary? recipe)
     {
         _editingItemValueId = null;
 
@@ -565,6 +557,8 @@
             .ToList();
     }
 
+    private void ClearStatusMessage() => _statusMessage = null;
+
     private void StartNewRecipe()
     {
         _editingRecipeId = 0;
@@ -574,7 +568,7 @@
         _statusMessage = null;
     }
 
-    private void StartEditRecipe(Recipe recipe)
+    private void StartEditRecipe(RecipeSummary recipe)
     {
         _editingRecipeId = recipe.Id;
         _recipeName = recipe.Name;
@@ -614,9 +608,9 @@
             _hasError = false;
             _statusMessage = "Receita salva com os 4 Mixers (100, 200, 300, 400)!";
 
-            _allRecipes = await RecipeService.GetAllRecipesAsync();
-            ApplyRecipeFilter();
-            await SelectRecipeAsync(saved);
+            await LoadRecipesAsync();
+            var savedSummary = _allRecipes.FirstOrDefault(r => r.Id == saved.Id);
+            await SelectRecipeAsync(savedSummary);
         }
         catch (Exception ex)
         {
@@ -625,7 +619,7 @@
         }
     }
 
-    private async Task DeleteRecipeAsync(Recipe recipe)
+    private async Task DeleteRecipeAsync(RecipeSummary recipe)
     {
         var parameters = new DialogParameters();
         parameters.Add("ContentText", $"Deseja realmente excluir a receita '{recipe.Name}'?");
@@ -674,9 +668,8 @@
             _hasError = false;
             _statusMessage = $"Bloco inserido na posição #{added.SequenceOrder} do {_selectedRecipeMixer.Name}!";
 
-            _allRecipes = await RecipeService.GetAllRecipesAsync();
-            ApplyRecipeFilter();
-            await SelectRecipeAsync(_selectedRecipe);
+            await LoadRecipesAsync();
+            await ReloadSelectedRecipeAsync();
         }
         catch (Exception ex)
         {
@@ -694,7 +687,7 @@
         _hasError = false;
         _statusMessage = $"Bloco '{recipeBlock.Block?.Code}' movido para a posição #{targetOrder} no {_selectedRecipeMixer?.Name}.";
 
-        await SelectRecipeAsync(_selectedRecipe);
+        await ReloadSelectedRecipeAsync();
     }
 
     private async Task MoveBlockDownAsync(RecipeBlock recipeBlock)
@@ -706,7 +699,7 @@
         _hasError = false;
         _statusMessage = $"Bloco '{recipeBlock.Block?.Code}' movido para a posição #{targetOrder} no {_selectedRecipeMixer?.Name}.";
 
-        await SelectRecipeAsync(_selectedRecipe);
+        await ReloadSelectedRecipeAsync();
     }
 
     private async Task ChangeBlockPositionAsync(RecipeBlock recipeBlock, int newOrder)
@@ -718,7 +711,7 @@
         _hasError = false;
         _statusMessage = $"Ordem do bloco '{recipeBlock.Block?.Code}' alterada para #{clamped} no {_selectedRecipeMixer?.Name}.";
 
-        await SelectRecipeAsync(_selectedRecipe);
+        await ReloadSelectedRecipeAsync();
     }
 
     private async Task RemoveBlockInstanceFromMixerAsync(RecipeBlock recipeBlock)
@@ -729,9 +722,8 @@
         _hasError = false;
         _statusMessage = $"Bloco (Posição #{recipeBlock.SequenceOrder}) removido do {_selectedRecipeMixer?.Name}.";
 
-        _allRecipes = await RecipeService.GetAllRecipesAsync();
-        ApplyRecipeFilter();
-        await SelectRecipeAsync(_selectedRecipe);
+        await LoadRecipesAsync();
+        await ReloadSelectedRecipeAsync();
     }
 
     private void StartEditItemValue(RecipeItemValue itemVal)
@@ -765,7 +757,15 @@
         _hasError = false;
         _statusMessage = $"Valor da Tag '{_editingItemTag}' atualizado com sucesso!";
 
-        await SelectRecipeAsync(_selectedRecipe);
+        await ReloadSelectedRecipeAsync();
+    }
+
+    private async Task ReloadSelectedRecipeAsync()
+    {
+        if (_selectedRecipe is null) return;
+
+        var summary = _allRecipes.FirstOrDefault(r => r.Id == _selectedRecipe.Id);
+        await SelectRecipeAsync(summary);
     }
 
     private static bool ValidateItemValue(ItemDataType type, string value, out string error)
