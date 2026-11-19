@@ -3,15 +3,15 @@
 @inject IAuthService AuthService
 @inject IDialogService DialogService
 
+
 <PageTitle>Cadastro de Blocos</PageTitle>
 
-<div class="d-flex justify-space-between align-center mb-3">
+<div class="mb-3">
     <MudText Typo="Typo.h5">Cadastro Dedicado de Blocos (Por Mixer)</MudText>
-    @if (!string.IsNullOrEmpty(_statusMessage))
-    {
-        <DismissibleMudAlert Severity="@(_hasError ? Severity.Error : Severity.Success)" OnClose="ClearStatusMessage">@_statusMessage</DismissibleMudAlert>
-    }
+    
 </div>
+
+
 
 <MudGrid>
     @if (CanEdit)
@@ -101,8 +101,23 @@
                             Limpar
                         </MudButton>
                     }
+
                 </div>
+                
+                    @if (!string.IsNullOrEmpty(_statusMessage))
+                    {                    
+                        <DismissibleMudAlert Severity="@(_hasError ? Severity.Error : Severity.Success)"
+                            Dense="true" Class="mt-4" OnClose="ClearStatusMessage">
+                            @_statusMessage 
+                        </DismissibleMudAlert>
+                                     
+                    }               
+
             </MudPaper>
+
+
+           
+
         </MudItem>
     }
 
@@ -147,8 +162,7 @@
                 </MudItem>
             </MudGrid>
 
-            <div class="crud-table-scroll">
-                <MudTable T="Block" Items="_filteredBlocks" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm">
+            <MudTable T="Block" Items="_filteredBlocks" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm" RowsPerPage="5" Height="clamp(180px, 55vh, 480px)" FixedHeader="true" FixedFooter="true" ContainerStyle="scrollbar-gutter: stable;">
                     <HeaderContent>
                     <MudTh>Ícone</MudTh>
                     <MudTh>Mixer Exclusivo</MudTh>
@@ -180,29 +194,27 @@
                     <MudTd DataLabel="Código"><code>@context.Code</code></MudTd>
                     <MudTd DataLabel="Nome do Bloco"><b>@context.Name</b></MudTd>
                     <MudTd DataLabel="Descrição">@context.Description</MudTd>
-                    <MudTd DataLabel="Qtd. Itens">
-                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@context.Items.Count</MudChip>
-                    </MudTd>
-                    @if (CanEdit)
-                    {
-                        <MudTd>
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                           Size="Size.Small"
-                                           Color="Color.Primary"
-                                           OnClick="@(() => StartEditBlock(context))" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                           Size="Size.Small"
-                                           Color="Color.Error"
-                                           OnClick="@(() => DeleteBlockAsync(context))" />
-                        </MudTd>
-                    }
+                    <MudTd DataLabel="Qtd. Itens">                        
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+                            @context.Items.Count
+                        </MudChip>   
+                    </MudTd>                   
+                    
+                    
+                    <RowActionsButtons CanEdit="@CanEdit"
+                                        OnEdit="@(() => StartEditBlock(context))"
+                                        OnDelete="@(() => DeleteBlockAsync(context))" />
                 </RowTemplate>
+
+
                             <NoRecordsContent>
                                 <MudText Typo="Typo.body2" Class="pa-2">Nenhum bloco encontrado.</MudText>
                             </NoRecordsContent>
-                        </MudTable>
-                    </div>
-                </MudPaper>
+                            <PagerContent>
+                                <MudTablePager PageSizeOptions="new int[] { 5, 10, 25, 50 }" />
+                            </PagerContent>
+            </MudTable>
+        </MudPaper>
     </MudItem>
 </MudGrid>
 

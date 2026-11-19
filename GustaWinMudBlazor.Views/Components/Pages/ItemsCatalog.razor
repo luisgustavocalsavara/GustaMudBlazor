@@ -134,7 +134,7 @@
             </MudGrid>
 
             <div class="crud-table-scroll">
-                <MudTable T="RecipeItem" Items="_filteredItems" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm">
+                <MudTable T="RecipeItem" Items="_filteredItems" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm" RowsPerPage="10">
                     <HeaderContent>
                     <MudTh>Mixer</MudTh>
                     <MudTh>Bloco</MudTh>
@@ -178,6 +178,9 @@
                             <NoRecordsContent>
                                 <MudText Typo="Typo.body2" Class="pa-2">Nenhum item encontrado.</MudText>
                             </NoRecordsContent>
+                            <PagerContent>
+                                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
+                            </PagerContent>
                         </MudTable>
                     </div>
                 </MudPaper>

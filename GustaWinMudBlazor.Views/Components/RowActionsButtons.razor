@@ -1,0 +1,28 @@
+
+@if (CanEdit)
+{
+    <MudTd DataLabel="Ações" Style="white-space: nowrap;">
+        <div style="display: inline-flex; flex-wrap: nowrap; align-items: center;">
+            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           OnClick="OnEdit" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                           Size="Size.Small"
+                           Color="Color.Error"
+                           OnClick="OnDelete" />
+        </div>
+    </MudTd>
+}
+
+@code {
+    
+    [Parameter]
+    public bool CanEdit { get; set; }
+
+    [Parameter]
+    public EventCallback OnEdit { get; set; }
+
+    [Parameter]
+    public EventCallback OnDelete { get; set; }
+}

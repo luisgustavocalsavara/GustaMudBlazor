@@ -66,6 +66,7 @@
                           Hover="true"
                           Dense="true"
                           Loading="_isLoading"
+                          RowsPerPage="10"
                           RowClassFunc="@((recipe, _) => _selectedRecipe?.Id == recipe.Id ? "mud-theme-primary" : "")"
                           OnRowClick="@((TableRowClickEventArgs<RecipeSummary> args) => SelectRecipeAsync(args.Item))">
                 <HeaderContent>
@@ -98,6 +99,9 @@
                             <NoRecordsContent>
                                 <MudText Typo="Typo.body2" Class="pa-2">Nenhuma receita encontrada.</MudText>
                             </NoRecordsContent>
+                            <PagerContent>
+                                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
+                            </PagerContent>
                         </MudTable>
                     </div>
                 </MudPaper>
@@ -290,7 +294,7 @@
                                         </div>
                                     </TitleContent>
                                     <ChildContent>
-                                        <MudTable Items="rb.ItemValues" Hover="true" Dense="true" Striped="true" Elevation="0" Breakpoint="Breakpoint.Sm">
+                                        <MudTable Items="rb.ItemValues" Hover="true" Dense="true" Striped="true" Elevation="0" Breakpoint="Breakpoint.Sm" RowsPerPage="10">
                                             <HeaderContent>
                                                 <MudTh>Tag</MudTh>
                                                 <MudTh>Descrição</MudTh>
@@ -354,6 +358,9 @@
                                             <NoRecordsContent>
                                                 <MudText Typo="Typo.caption" Class="pa-2">Este bloco não possui itens cadastrados.</MudText>
                                             </NoRecordsContent>
+                                            <PagerContent>
+                                                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
+                                            </PagerContent>
                                         </MudTable>
                                     </ChildContent>
                                 </MudExpansionPanel>

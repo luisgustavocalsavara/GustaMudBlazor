@@ -80,7 +80,7 @@
                           Class="mb-3" />
 
             <div class="crud-table-scroll">
-                <MudTable T="RecipeSummary" Items="_filteredRecipes" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm">
+                <MudTable T="RecipeSummary" Items="_filteredRecipes" Hover="true" Dense="true" Striped="true" Loading="_isLoading" Breakpoint="Breakpoint.Sm" RowsPerPage="10">
                     <HeaderContent>
                     <MudTh>ID</MudTh>
                     <MudTh>Nome da Receita</MudTh>
@@ -119,6 +119,9 @@
                             <NoRecordsContent>
                                 <MudText Typo="Typo.body2" Class="pa-2">Nenhuma receita encontrada.</MudText>
                             </NoRecordsContent>
+                            <PagerContent>
+                                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
+                            </PagerContent>
                         </MudTable>
                     </div>
                 </MudPaper>

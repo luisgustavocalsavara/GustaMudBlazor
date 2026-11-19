@@ -1,21 +1,17 @@
 @if (!_isDismissed)
 {
+    
     <MudAlert Severity="@Severity"
               Dense="@Dense"
-              ShowCloseIcon="false"
+              ShowCloseIcon="true"
+              CloseIconClicked="(Close)"
               Class="@Class">
-        <div class="d-flex align-start justify-space-between gap-2">
-            <div class="flex-grow-1">
+            
                 @ChildContent
-            </div>
-            <MudIconButton Icon="@Icons.Material.Filled.Close"
-                           Size="Size.Small"
-                           Color="Color.Inherit"
-                           Class="pa-0"
-                           AriaLabel="Fechar alerta"
-                           OnClick="Close" />
-        </div>
+                 
     </MudAlert>
+
+
 }
 
 @code {
